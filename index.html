@@ -26,6 +26,31 @@
             gap: 1rem;
         }
 
+        #edit-controls {
+            display: none;
+            position: fixed;
+            z-index: 3;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            max-height: 90%;
+            height: fit-content;
+            width: fit-content;
+            flex-direction: column;
+            gap: .5rem;
+            padding: .25rem;
+            border-radius: .25rem;
+            background-color: white;
+            overflow-y: auto;
+        }
+        #edit-controls button {
+            display: block;
+            background-color: rgb(77, 77, 77);
+            border-width: 0;
+            outline-width: 0;
+            background-repeat: no-repeat;
+        }
+
         #controls {
             display: flex;
             gap: .5rem;
@@ -72,8 +97,11 @@
 
     <div id="controls">
         <button id="debug">Debug</button>
+        <button id="edit">Edit</button>
     </div>
-
+    <div id="edit-controls">
+        
+    </div>
     <canvas id="canvas1"></canvas>
 
     <div id="assets">

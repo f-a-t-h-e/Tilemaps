@@ -21,6 +21,7 @@ export class Map {
     this.image = document.getElementById("tilemap1");
     this.imageTile = 32;
     this.imageCols = this.image.width / this.imageTile;
+    this.imageRows = this.image.height / this.imageTile;
     this.w = this.cols * this.tileSize;
     this.h = this.rows * this.tileSize;
     this.generateMap();

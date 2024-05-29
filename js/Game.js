@@ -1,4 +1,5 @@
 import { Camera } from "./Camera.js";
+import { Editor } from "./Editor.js";
 import { Map } from "./Map.js";
 
 // const GAME_WIDTH = 768;
@@ -21,11 +22,18 @@ export class Game {
       ArrowLeft: false,
       ArrowRight: false,
     };
+    this.cursor = {
+      x: 0,
+      y: 0,
+    };
     //
     this.map = new Map(this);
     this.camera = new Camera(this);
+    this.editor = new Editor(this);
     this.debugging = false;
     this.draw = this.debugging ? this.drawDebug : this.drawNormal;
+    this.editMode = false;
+    this.renderEdit = this.editMode ? this.renderEditOn : this.renderEditOff;
   }
   update(deltaTime) {
     let moveX = 0;
@@ -70,16 +78,17 @@ export class Game {
     //   }
     // }
     // this.draw( this.map.image, 0, 0, 0, 0, this.map.imageTile);
-    this.map.drawGround()
+    this.map.drawGround();
+    this.renderEdit();
   }
   /**
-   * 
-   * @param {number} w 
-   * @param {number} h 
+   *
+   * @param {number} w
+   * @param {number} h
    */
-  resize(w,h){
-    this.w = w
-    this.h = h
+  resize(w, h) {
+    this.w = w;
+    this.h = h;
     this.map.resize();
     this.camera.resize();
   }
@@ -93,7 +102,7 @@ export class Game {
    * @param {number} imageTile Source image tile size
    */
   drawDebug(image, sx, sy, dx, dy, imageTile) {
-    this.drawNormal( image, sx, sy, dx, dy, imageTile)
+    this.drawNormal(image, sx, sy, dx, dy, imageTile);
     this.ctx.strokeRect(
       dx * this.map.tileSize + this.camera.x,
       dy * this.map.tileSize + this.camera.y,
@@ -107,8 +116,8 @@ export class Game {
     this.ctx.textBaseline = "middle";
     this.ctx.fillText(
       dy * this.map.cols + dx,
-      dx * this.map.tileSize + 0.5 * this.map.tileSize  + this.camera.x,
-      dy * this.map.tileSize + 0.5 * this.map.tileSize  + this.camera.y
+      dx * this.map.tileSize + 0.5 * this.map.tileSize + this.camera.x,
+      dy * this.map.tileSize + 0.5 * this.map.tileSize + this.camera.y
       // this.map.tileSize,
     );
     this.ctx.restore();
@@ -122,21 +131,53 @@ export class Game {
    * @param {number} dy Canvas `y` position
    * @param {number} imageTile Source image tile size
    */
-  drawNormal( image, sx, sy, dx, dy, imageTile) {
+  drawNormal(image, sx, sy, dx, dy, imageTile) {
     this.ctx.drawImage(
       image,
       sx * imageTile,
       sy * imageTile,
       imageTile,
       imageTile,
-      dx * this.map.tileSize  + this.camera.x,
-      dy * this.map.tileSize  + this.camera.y,
+      dx * this.map.tileSize + this.camera.x,
+      dy * this.map.tileSize + this.camera.y,
       this.map.tileSize,
       this.map.tileSize
     );
   }
-  toggleDebugging(){
+  renderEditOn() {
+    this.editor.render();
+  }
+  renderEditOff() {}
+  toggleDebugging() {
     this.debugging = !this.debugging;
     this.draw = this.debugging ? this.drawDebug : this.drawNormal;
+  }
+  toggleEditMode() {
+    const editingControlsParent = document.getElementById("edit-controls");
+    if (!editingControlsParent) {
+      return;
+    }
+    this.editMode = !this.editMode;
+    if (this.editMode) {
+      editingControlsParent.style.display = "flex";
+    } else {
+      editingControlsParent.style.display = "none";
+    }
+    this.renderEdit = this.editMode ? this.renderEditOn : this.renderEditOff;
+  }
+  /**
+   *
+   * @param {MouseEvent} e
+   */
+  click(e) {
+    if (this.editMode) {
+      const col = Math.floor((-this.camera.x + e.clientX) / this.map.tileSize);
+      const row = Math.floor((-this.camera.y + e.clientY) / this.map.tileSize);
+      this.editor.apply(row, col, "click");
+    }
+  }
+  setCursor(x, y) {
+    this.cursor.x = x;
+    this.cursor.y = y;
   }
 }

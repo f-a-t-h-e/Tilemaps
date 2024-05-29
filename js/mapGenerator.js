@@ -1,5 +1,5 @@
 // MAP GENERATION
-const tileRules = {
+export const tileRules = {
   0: {
     top: [10, 11, 12, 17],
     bottom: [5, 10, 21],
@@ -223,19 +223,13 @@ export function getSourceFromMap(map, rows, columns) {
             objects.layer1.push({
               row: i,
               col: j,
-              tile: [
-                target.object.tile % columns,
-                Math.floor(target.object.tile / rows),
-              ],
+              tile: getSourceFromTileNumber(target.object.tile, rows, columns),
             });
           } else {
             objects.layer2.push({
               row: i,
               col: j,
-              tile: [
-                target.object.tile % columns,
-                Math.floor(target.object.tile / rows),
-              ],
+              tile: getSourceFromTileNumber(target.object.tile, rows, columns),
             });
           }
         }
@@ -243,9 +237,20 @@ export function getSourceFromMap(map, rows, columns) {
         //   ground: [target.tile % columns, Math.floor(target.tile / rows)],
         //   ...(target.object ? { object: {tile: [target.object.tile % columns, Math.floor(target.object.tile / rows)]} } : {}),
         // };
-        return [target.tile % columns, Math.floor(target.tile / rows)];
+        return getSourceFromTileNumber(target.tile, rows, columns);
       })
     ),
     objects,
   };
+}
+
+/**
+ *
+ * @param {number} tile
+ * @param {number} rows
+ * @param {number} columns
+ * @returns
+ */
+export function getSourceFromTileNumber(tile, rows, columns) {
+  return [tile % columns, Math.floor(tile / rows)];
 }

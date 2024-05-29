@@ -38,6 +38,18 @@ window.addEventListener("load", async () => {
   document
     .getElementById("debug")
     ?.addEventListener("click", () => game.toggleDebugging());
+  document
+    .getElementById("edit")
+    ?.addEventListener("click", () => game.toggleEditMode());
+  document.addEventListener("mousemove", (e) => {
+    const { x, y } = canvas.getBoundingClientRect();
+    game.setCursor(e.clientX - x, e.clientY - y);
+  });
+  canvas.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) {
+      game.click(e);
+    }
+  });
   resizeCanvas();
   let lastTime = 0;
   function animate(timesTamp) {
