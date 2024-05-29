@@ -49,14 +49,16 @@
 
         #canvas1 {
             background-color: rgba(0, 0, 255, 0.15);
-            height: 100%;
-            width: 100%;
+            border: 1px solid black;
+            max-height: 100%;
+            max-width: 100%;
             display: block;
             image-rendering: crisp-edges;
             image-rendering: pixelated;
             position: fixed;
-            top: 0;
-            left: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 1;
         }
 
@@ -75,11 +77,11 @@
     <canvas id="canvas1"></canvas>
 
     <div id="assets">
-        <img id="tilemap1" src="/assets/tilemap1simple.png" alt="A simple tilemap number 1">
+        <img id="tilemap1" src="/assets/tilemap1.png" alt="A simple tilemap number 1">
     </div>
 
-    <script src="/js/app.js"></script>
-    <script src="/js/mapGenerator.js"></script>
+    <script src="/js/app.js" type="module"></script>
+
 </body>
 
 </html>
