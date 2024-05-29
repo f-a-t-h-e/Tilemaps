@@ -2,6 +2,7 @@ import { Game } from "./Game.js";
 import { generateRandomMap, getSourceFromMap } from "./mapGenerator.js";
 
 const BASE_TILE = 64;
+const mapSizeTimesWindow = 2;
 
 export class Map {
   /**
@@ -10,8 +11,8 @@ export class Map {
    */
   constructor(game) {
     this.game = game;
-    this.cols = 12;
-    this.rows = 12;
+    this.cols = Math.ceil(this.game.w / BASE_TILE) * mapSizeTimesWindow;
+    this.rows = Math.ceil(this.game.h / BASE_TILE) * mapSizeTimesWindow;
     // this.tileSize = 64;
     this.tileSize = 64;
     /**
@@ -25,8 +26,8 @@ export class Map {
     this.generateMap();
   }
   resize(){
-    this.cols = Math.ceil(this.game.w / BASE_TILE) * 2;
-    this.rows = Math.ceil(this.game.h / BASE_TILE) * 2;
+    this.cols = Math.ceil(this.game.w / BASE_TILE) * mapSizeTimesWindow;
+    this.rows = Math.ceil(this.game.h / BASE_TILE) * mapSizeTimesWindow;
     this.w = this.cols * this.tileSize;
     this.h = this.rows * this.tileSize;
     this.generateMap()
