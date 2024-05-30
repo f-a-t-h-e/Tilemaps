@@ -1,11 +1,10 @@
 import { Camera } from "./Camera.js";
 import { Editor } from "./Editor.js";
 import { Map } from "./Map.js";
+import { Player } from "./Player.js";
 
-// const GAME_WIDTH = 768;
-// const GAME_HEIGHT = 768;
-const GAME_WIDTH = 32 * 5 * 2;
-const GAME_HEIGHT = 32 * 5 * 2;
+const GAME_WIDTH = innerWidth;
+const GAME_HEIGHT = innerHeight;
 export class Game {
   /**
    *
@@ -34,23 +33,38 @@ export class Game {
     this.draw = this.debugging ? this.drawDebug : this.drawNormal;
     this.editMode = false;
     this.renderEdit = this.editMode ? this.renderEditOn : this.renderEditOff;
+
+    // Player
+    this.player = new Player(this, {
+      x: -this.camera.x + this.camera.width * 0.5,
+      y: -this.camera.y + this.camera.height * 0.5,
+      size: this.map.tileSize * 0.5,
+    });
   }
   update(deltaTime) {
     let moveX = 0;
     let moveY = 0;
     if (this.keys["ArrowUp"]) {
-      moveY += 1;
-    }
-    if (this.keys["ArrowDown"]) {
       moveY -= 1;
     }
-    if (this.keys["ArrowRight"]) {
-      moveX -= 1;
+    if (this.keys["ArrowDown"]) {
+      moveY += 1;
     }
-    if (this.keys["ArrowLeft"]) {
+    if (this.keys["ArrowRight"]) {
       moveX += 1;
     }
-    this.camera.move(deltaTime, moveX, moveY);
+    if (this.keys["ArrowLeft"]) {
+      moveX -= 1;
+    }
+    moveX *= deltaTime;
+    moveY *= deltaTime;
+    if (moveX || moveY) {
+      this.camera.move(...this.player.move(moveX, moveY));
+      this.player.stateSwitcher("running");
+    } else {
+      this.player.stateSwitcher("idle");
+    }
+    this.player.update(deltaTime);
   }
   render() {
     // this.ctx.drawImage(
@@ -79,6 +93,7 @@ export class Game {
     // }
     // this.draw( this.map.image, 0, 0, 0, 0, this.map.imageTile);
     this.map.drawGround();
+    this.player.render();
     this.renderEdit();
   }
   /**
@@ -90,7 +105,7 @@ export class Game {
     this.w = w;
     this.h = h;
     this.map.resize();
-    this.camera.resize();
+    this.camera.resize(...this.player.resize());
   }
   /**
    *

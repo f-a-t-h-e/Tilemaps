@@ -38,9 +38,9 @@ export class Editor {
         (position[0] / (this.game.map.imageCols - 1)) * 100
       }% ${(position[1] / (this.game.map.imageRows - 1)) * 100}%`;
       element.style.backgroundSize =
-        this.game.map.image.width * 2 +
+        this.game.map.image.width * (this.game.map.tileSize / this.game.map.imageTile) +
         "px " +
-        this.game.map.image.height * 2 +
+        this.game.map.image.height * (this.game.map.tileSize / this.game.map.imageTile) +
         "px";
       element.setAttribute("data-pos", `${position[0]} ${position[1]}`);
       element.addEventListener("click", () => {

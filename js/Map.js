@@ -13,7 +13,6 @@ export class Map {
     this.game = game;
     this.cols = Math.ceil(this.game.w / BASE_TILE) * mapSizeTimesWindow;
     this.rows = Math.ceil(this.game.h / BASE_TILE) * mapSizeTimesWindow;
-    // this.tileSize = 64;
     this.tileSize = 64;
     /**
      * @type {HTMLImageElement}
