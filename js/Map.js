@@ -18,8 +18,8 @@ export class Map {
     // this.rows = Math.ceil(this.game.h / BASE_TILE) * mapSizeTimesWindow;
     // this.cols = 50;
     // this.rows = 30;
-    this.cols = 50;
-    this.rows = 30;
+    this.cols = 75;
+    this.rows = 50;
     this.tileSize = this.game.baseTileSize;
     /**
      * @type {HTMLImageElement}
@@ -78,14 +78,15 @@ export class Map {
     }
   }
   generateMap() {
+    // const savedMap = 
     const { ground, objects } = getSourceFromMap(
       generateRandomMap(this.cols, this.rows),
       this.image.height / this.imageTile,
       this.image.width / this.imageTile,
       (objectData) => {
         return new ObjectTree(this.game, {
-          rootX: objectData.col * this.tileSize + this.tileSize * Math.random(),
-          rootY: objectData.row * this.tileSize + this.tileSize * Math.random(),
+          rootX: objectData.col * this.tileSize + this.tileSize * .5,
+          rootY: objectData.row * this.tileSize + this.tileSize * .5,
           age: objectData.object.age,
           type: objectData.object.type,
         });

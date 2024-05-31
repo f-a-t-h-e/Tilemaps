@@ -15,10 +15,15 @@ export class Game {
     this.ctx = ctx;
     this.w = GAME_WIDTH;
     this.h = GAME_HEIGHT;
-    this.minCols = 15;
-    this.minRows = 15;
-    this.zoom = 2;
-    this.baseTileSize = Math.max(this.w / this.minCols, this.h / this.minRows) * this.zoom;
+    this.minCols = 10;
+    this.minRows = 10;
+    this.maxZoom = 2;
+    this.zoomStep = 0.1;
+    this.minZoom = 0.2;
+    this.defaultZoomLevel = (this.maxZoom - this.minZoom) * .5 + this.minZoom;
+    this.zoom = this.defaultZoomLevel;
+    this.baseTileSize =
+      Math.max(this.w / this.minCols, this.h / this.minRows) * this.zoom;
     // this.imageToCanvas = 2;
     this.keys = {
       ArrowUp: false,
@@ -49,13 +54,13 @@ export class Game {
 
     // this.player.applyCollision(0,0)
 
-    window.addEventListener("keypress", (e)=>{
+    window.addEventListener("keypress", (e) => {
       if (e.key == "Enter") {
         this.map.objects.print();
         // console.log(this.map.objects.head);
         // console.log(this.camera);
       }
-    })
+    });
   }
   update(deltaTime) {
     let moveX = 0;
@@ -98,7 +103,10 @@ export class Game {
   resize(w, h) {
     this.w = w;
     this.h = h;
-    let newTileSizeRatio = (Math.max(this.w / this.minCols, this.h / this.minRows) / this.baseTileSize) * this.zoom
+    let newTileSizeRatio =
+      (Math.max(this.w / this.minCols, this.h / this.minRows) /
+        this.baseTileSize) *
+      this.zoom;
     this.baseTileSize *= newTileSizeRatio;
     this.map.resize(newTileSizeRatio);
     // this.camera.resize(...this.player.resize(newTileSizeRatio));
@@ -115,7 +123,7 @@ export class Game {
   drawDebug(image, sx, sy, dx, dy, imageTile) {
     this.drawNormal(image, sx, sy, dx, dy, imageTile);
     this.ctx.save();
-    this.ctx.strokeStyle = "#eaeaea"
+    this.ctx.strokeStyle = "#eaeaea";
     this.ctx.strokeRect(
       dx + this.camera.x,
       dy + this.camera.y,
@@ -123,11 +131,11 @@ export class Game {
       this.map.tileSize
     );
     this.ctx.fillStyle = "red";
-    this.ctx.font = `${this.baseTileSize * .2}px Arial`;
+    this.ctx.font = `${this.baseTileSize * 0.2}px Arial`;
     this.ctx.textAlign = "center";
     this.ctx.textBaseline = "middle";
     this.ctx.fillText(
-      Math.floor(dy / this.map.tileSize) + Math.floor(dx/this.map.tileSize),
+      Math.floor(dy / this.map.tileSize) + Math.floor(dx / this.map.tileSize),
       dx + 0.5 * this.map.tileSize + this.camera.x,
       dy + 0.5 * this.map.tileSize + this.camera.y
       // this.map.tileSize,
@@ -192,5 +200,43 @@ export class Game {
   setCursor(x, y) {
     this.cursor.x = x;
     this.cursor.y = y;
+  }
+
+  // Some settings
+  /**
+   *
+   * @param {HTMLButtonElement} zoomin The zoom-in control button
+   * @param {HTMLButtonElement} zoomout The zoom-out control button
+   * @param {"in"|"out"|null} zooming The zooming chosen
+   */
+  setZoom(zoomin, zoomout, zooming) {
+    if (zooming === "in") {
+      if (this.zoom < this.maxZoom) {
+        this.zoom += this.zoomStep;
+        zoomout.disabled = false;
+        if (this.zoom >= this.maxZoom) {
+          this.zoom = this.maxZoom;
+          zoomin.disabled = true;
+        }
+        this.resize(this.w, this.h);
+      }
+    } else if (zooming === "out") {
+      if (this.zoom > this.minZoom) {
+        this.zoom -= this.zoomStep;
+        zoomin.disabled = false;
+        if (this.zoom <= this.minZoom) {
+          this.zoom = this.minZoom;
+          zoomout.disabled = true;
+        }
+        this.resize(this.w, this.h);
+      }
+    } else {
+      if (this.zoom !== this.defaultZoomLevel) {
+        this.zoom = this.defaultZoomLevel;
+        this.resize(this.w, this.h);
+      }
+      zoomin.disabled = false;
+      zoomout.disabled = false;
+    }
   }
 }

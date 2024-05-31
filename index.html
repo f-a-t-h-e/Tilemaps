@@ -26,6 +26,10 @@
             gap: 1rem;
         }
 
+        button {
+            cursor: pointer;
+        }
+
         #edit-controls {
             display: none;
             position: fixed;
@@ -43,6 +47,7 @@
             background-color: white;
             overflow-y: auto;
         }
+
         #edit-controls button {
             display: block;
             background-color: rgb(77, 77, 77);
@@ -60,6 +65,7 @@
             left: 0;
             justify-content: center;
             z-index: 2;
+            user-select: none;
         }
 
         #controls button {
@@ -70,6 +76,23 @@
             border: none;
             font-weight: 600;
             color: rgb(52, 52, 52);
+        }
+
+        #zoom {
+            display: flex;
+            background: white;
+            align-items: center;
+            border-radius: .25rem;
+            overflow: hidden;
+        }
+
+        #zoom button {
+            border-radius: 0;
+        }
+
+        #zoom button:disabled {
+            pointer-events: none;
+            background-color: #ccc;
         }
 
         #canvas1 {
@@ -98,9 +121,14 @@
     <div id="controls">
         <button id="debug">Debug</button>
         <button id="edit">Edit</button>
+        <div id="zoom">
+            <button id="zoom-in">+</button>
+            <button id="reset-zoom">reset zoom</button>
+            <button id="zoom-out">-</button>
+        </div>
     </div>
     <div id="edit-controls">
-        
+
     </div>
     <canvas id="canvas1"></canvas>
 
