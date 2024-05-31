@@ -1,6 +1,50 @@
 import { Game } from "./Game.js";
+import { ObjectTree } from "./ObjectClass.js";
+import { TwoWayNode } from "./customList.js";
+import { checkRCollision } from "./utils.js";
 
 export class Player {
+  // static baseSpeed = 20;
+  _x = 0;
+  get x() {
+    return this._x;
+  }
+  set x(value) {
+    this._x = Math.max(this.r, Math.min(this.game.map.w - this.r, value));
+    this._rootX = Math.round(this._x + this.dw * 0.5);
+  }
+  _y = 0;
+  get y() {
+    return this._y;
+  }
+  set y(value) {
+    this._y = Math.max(this.r, Math.min(this.game.map.h - this.r, value));
+    this._rootY = Math.round(this._y + this.dh - this.r);
+  }
+  _rootX = 0;
+  get rootX(){
+    return this._rootX
+  }
+  set rootX(value){
+    this._rootX = Math.max(this.r, Math.min(this.game.map.w - this.r, (Math.round(value))));
+    this._x = this._rootX - this.dw * .5;
+  }
+  _rootY = 0;
+  get rootY(){
+    return this._rootY
+  }
+  set rootY(value){
+    this._rootY = Math.max(this.r, Math.min(this.game.map.h - this.r, Math.round(value)))
+    this._y = this._rootY - (this.dh - this.r)
+  }
+  // _o = new TwoWayNode(0,0)
+  // set objNode (v){
+  //   console.trace(v)
+  //   this._o = v
+  // }
+  // get objNode (){
+  //   return this._o
+  // }
   /**
    *
    * @param {Game} game
@@ -8,14 +52,25 @@ export class Player {
    */
   constructor(
     game,
-    { x, y, fullHp = 100, hp = fullHp, maxSpeed = 1000, size = 32, speed = size * 2 }
+    {
+      x,
+      y,
+      fullHp = 100,
+      hp = fullHp,
+      maxSpeed = 50,
+      size = 0.5,
+      speed = 0.125,
+    }
   ) {
     this.game = game;
-    this.x = x;
-    this.y = y;
     this.size = size;
-    this.r = size * 0.5;
-
+    this.dw = this.size * this.game.baseTileSize;
+    this.dh = this.size * this.game.baseTileSize;
+    this.r = this.game.baseTileSize * this.size * 0.25;
+    this.rootX = x;
+    this.rootY = y;
+    this.objNode = new TwoWayNode(0, 0);
+    this.setObjPosition();
     /**
      * @type {HTMLImageElement}
      */
@@ -37,7 +92,7 @@ export class Player {
     };
     this.currentSprite = 0;
     this.spriteInterval = 0;
-    this.spritePerSecond = 1 / 10;
+    this.spritePerSecond = 1 / (maxSpeed * 3 * speed);
 
     /**
      * @type {keyof typeof this.spriteStates}
@@ -51,8 +106,9 @@ export class Player {
     this.fullHp = fullHp;
     this.hp = hp;
     this.maxSpeed = maxSpeed;
-    this.speedX = speed;
-    this.speedY = speed;
+    this.speed = speed;
+    this.speedX = this.maxSpeed * speed * this.game.baseTileSize * this.size;
+    this.speedY = this.maxSpeed * speed * this.game.baseTileSize * this.size;
   }
   /**
    *
@@ -62,6 +118,21 @@ export class Player {
     this.state = state;
   }
   move(moveX, moveY) {
+    if (moveX && moveY) {
+      // To make the distance moved the independent on the direction
+      // x,y = (x,y) / sqrt(2)
+      // this.x = this.x + moveX * this.speedX * 0.7071067811865475;
+      // this.y = this.y + moveY * this.speedY * 0.7071067811865475;
+      this.rootX = this.rootX + moveX * this.speedX * 0.707107;
+      this.rootY = this.rootY + moveY * this.speedY * 0.707107;
+    } else {
+      this.rootX = this.rootX + moveX * this.speedX;
+      this.rootY = this.rootY + moveY * this.speedY;
+    }
+    // Check Collision
+    this.applyCollision(moveX, moveY);
+
+    // Set the direction
     /**
      * @type {typeof this.direction}
      */
@@ -83,29 +154,8 @@ export class Player {
     }
 
     this.direction = `${moveWordY}${moveWordX}`;
-if (moveX && moveY) {
-  // To make the distance moved the independent on the direction
-  // x,y = (x,y) / sqrt(2)
-  this.x = Math.max(
-    this.r,
-    Math.min(this.game.map.w - this.r, this.x + moveX * this.speedX * 0.7071067811865475)
-  );
-  this.y = Math.max(
-    this.r,
-    Math.min(this.game.map.h - this.r, this.y + moveY * this.speedY * 0.7071067811865475)
-  );
-}else{
-
-  this.x = Math.max(
-    this.r,
-    Math.min(this.game.map.w - this.r, this.x + moveX * this.speedX)
-  );
-  this.y = Math.max(
-    this.r,
-    Math.min(this.game.map.h - this.r, this.y + moveY * this.speedY)
-  );
-}
-    return [this.x, this.y];
+    this.setObjPosition();
+    return [this.rootX, this.rootY];
   }
   /**
    *
@@ -119,22 +169,7 @@ if (moveX && moveY) {
     }
   }
 
-  render() {
-    this.game.ctx.save();
-    // this.game.ctx.beginPath();
-    // this.game.ctx.arc(
-    //   this.x + this.game.camera.x,
-    //   this.y + this.game.camera.y,
-    //   this.r,
-    //   0,
-    //   2 * Math.PI,
-    //   false
-    // );
-    // this.game.ctx.fillStyle = "blue"; // Fill color
-    // this.game.ctx.fill();
-    // this.game.ctx.lineWidth = 2; // Border width
-    // this.game.ctx.strokeStyle = "#003300"; // Border color
-    // this.game.ctx.stroke();
+  render(dx,dy) {
     this.game.ctx.drawImage(
       this.image,
       this.spriteStates[this.state][
@@ -143,17 +178,104 @@ if (moveX && moveY) {
       this.spriteDirections[this.direction],
       this.spriteSize,
       this.spriteSize,
-      this.x + this.game.camera.x,
-      this.y + this.game.camera.y,
-      this.size,
-      this.size
+      dx,
+      dy,
+      this.dw,
+      this.dh
     );
+    // this.game.ctx.restore();
+  }
+
+  debug(dx,dy) {
+    this.render(dx,dy);
+    this.game.ctx.save();
+    this.game.ctx.beginPath();
+    // console.log(obj.value.r);
+    this.game.ctx.arc(
+      this.rootX + this.game.camera.x,
+      this.rootY + this.game.camera.y,
+      this.r,
+      0,
+      2 * Math.PI,
+      false
+    );
+    this.game.ctx.fillStyle = "#ff000080"; // Fill color
+    this.game.ctx.fill();
+    this.game.ctx.lineWidth = 2; // Border width
+    this.game.ctx.strokeStyle = "#003300"; // Border color
+    this.game.ctx.stroke();
     this.game.ctx.restore();
   }
 
-  resize() {
-    this.x = Math.max(this.r, Math.min(this.game.map.w - this.r, this.x));
-    this.y = Math.max(this.r, Math.min(this.game.map.h - this.r, this.y));
-    return [this.x, this.y];
+  resize(newTileSizeRatio) {
+    this.dw *= newTileSizeRatio;
+    this.dh *= newTileSizeRatio;
+    this.r *= newTileSizeRatio;
+    this.rootX *= newTileSizeRatio;
+    this.rootY *= newTileSizeRatio;
+    // this.x *= newTileSizeRatio;
+    // this.y *= newTileSizeRatio;
+    this.speedX *= newTileSizeRatio;
+    this.speedY *= newTileSizeRatio;
+    this.game.camera.resize(this.rootX, this.rootY, newTileSizeRatio);
+    return [this.rootX, this.rootY];
+  }
+  setObjPosition() {
+    this.objAnchor = this.game.map.getObjKeyFromPosition(
+      this.rootX,
+      this.rootY
+    );
+    this.game.map.objects.remove(this.objNode);
+    this.objNode = this.game.map.objects.insertAfter(this.objAnchor, this);
+  }
+  /**
+   * 
+   * @param {boolean} up The direction to look for the new layer
+   */
+  moveObjPosition(up) {
+    this.objAnchor = this.game.map.getObjKeyFromPosition(
+      this.rootX,
+      this.rootY
+    );
+    // loop to get the closest 
+    this.game.map.objects.remove(this.objNode);
+    this.objNode = this.game.map.objects.insertAfter(this.objAnchor, this);
+  }
+
+  applyCollision(moveX,moveY){
+    /**
+     * @type {ObjectTree[]}
+     */
+    let objects;
+    /**
+     * @type {(typeof objects)[number]}
+     */
+    let obj;
+    for (
+      let row = this.game.camera.startRow;
+      row < this.game.camera.endRow;
+      row++
+    ) {
+      for (
+        let column = this.game.camera.startCol;
+        column < this.game.camera.endCol;
+        column++
+      ) {
+        objects = this.game.map.ground[row][column].objects;
+        for (let i = 0; i < objects.length; i++) {
+          obj = objects[i];
+          if (!obj) {
+            debugger
+          }
+          const {colission, deltaX, deltaY, distance, sumOfRadius} = checkRCollision(this, obj);
+          if (colission) {
+            const unit_X = deltaX / distance;
+            const unit_Y = deltaY / distance;
+            this.rootX = obj.rootX + (sumOfRadius + 1) * unit_X;
+            this.rootY = obj.rootY + (sumOfRadius + 1) * unit_Y;
+          }
+        }
+      }
+    }
   }
 }

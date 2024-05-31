@@ -1,3 +1,6 @@
+import { ObjectTree } from "./ObjectClass.js";
+import { getObjectKeysASNumbers, getRandomValueFromArray } from "./utils.js";
+
 // MAP GENERATION
 export const tileRules = {
   0: {
@@ -85,30 +88,42 @@ export const tileRules = {
     left: [0, 1, 20],
   },
 };
-const objectsRules = {
-  3: {
-    bottom: [8],
-  },
-  4: {
-    bottom: [9],
-  },
-  // 8: {
-  //   top: [3],
-  // },
-  // 9: {
-  //   top: [4],
-  // },
-  13: {
-    bottom: [18],
-  },
-  // 18: {
-  //   top: [13],
-  // },
-  14: {},
-  19: {},
-  22: {},
-  23: {},
-  24: {},
+// const objectsRules = {
+//   3: {
+//     bottom: [8],
+//   },
+//   4: {
+//     bottom: [9],
+//   },
+//   // 8: {
+//   //   top: [3],
+//   // },
+//   // 9: {
+//   //   top: [4],
+//   // },
+//   13: {
+//     bottom: [18],
+//   },
+//   // 18: {
+//   //   top: [13],
+//   // },
+//   14: {},
+//   19: {},
+//   22: {},
+//   23: {},
+//   24: {},
+// };
+
+export const objectsRules = {
+  0: [0, 1, 2],
+  1: [0, 1, 2],
+  2: [0, 1, 2],
+  3: [0, 1, 2],
+  4: [0, 1, 2],
+  5: [0, 1, 2],
+  6: [0, 1, 2],
+  7: [0, 1, 2],
+  8: [0, 1, 2],
 };
 const specialTiles = {
   3: {
@@ -126,7 +141,7 @@ const specialTiles = {
 };
 export function generateRandomMap(width, height) {
   /**
-   * @type {({tile:keyof (typeof tileRules);object?:{tile:keyof (typeof objectsRules)}|null}| null)[][]}
+   * @type {import("./types").TStepMap}
    */
   const map = Array.from({ length: height }, () =>
     Array(width)
@@ -145,13 +160,9 @@ export function generateRandomMap(width, height) {
       // Check tile above
       if (y > 0) {
         const topTile = map[y - 1][x];
-        let a = [...validTiles];
-        // debugger;
         validTiles = validTiles.filter((tile) =>
           tileRules[tile].top.includes(topTile.tile)
         );
-        // if (!validTiles.length) {
-        // }
       }
 
       // Check tile to the left
@@ -162,8 +173,6 @@ export function generateRandomMap(width, height) {
         validTiles = validTiles.filter((tile) => {
           return tileRules[tile].left.includes(leftTile.tile);
         });
-        // if (!validTiles.length) {
-        // }
       }
 
       // Randomly select a valid tile
@@ -172,23 +181,17 @@ export function generateRandomMap(width, height) {
 
       // Handle objects tiles
       if (!map[y][x].object && Math.random() < 0.3) {
-        let validObjectTiles = Object.keys(objectsRules).map(Number);
+        let validObjectTiles = getObjectKeysASNumbers(objectsRules);
+        /**
+         * @type {keyof typeof objectsRules}
+         */
+        const randomObjType = getRandomValueFromArray(validObjectTiles)
         map[y][x].object = {
-          tile: validObjectTiles[
-            Math.floor(Math.random() * validObjectTiles.length)
+          type: randomObjType,
+          age: objectsRules[randomObjType][
+            Math.floor(Math.random() * objectsRules[randomObjType].length)
           ],
         };
-        // Check if you need to complete the object in the bottom tile
-        if (objectsRules[map[y][x].object.tile].bottom && map[y + 1]) {
-          map[y + 1][x].object = {
-            tile: objectsRules[map[y][x].object.tile].bottom[
-              Math.floor(
-                Math.random() *
-                  objectsRules[map[y][x].object.tile].bottom.length
-              )
-            ],
-          };
-        }
       }
       map[y][x].tile = randomTile;
     }
@@ -199,45 +202,46 @@ export function generateRandomMap(width, height) {
 
 /**
  *
- * @param {({tile:keyof (typeof tileRules);object?:{tile:keyof (typeof objectsRules)}|null}| null)[][]} map
+ * @param {import("./types").TStepMap} map
  * @param {number} rows The source rows
  * @param {number} columns The source columns
+ * @param {import("./types").ObjectGenerator} objectGenerator The function that will handle generating the objects
  * @returns The map with the values from the source
  */
-export function getSourceFromMap(map, rows, columns) {
+export function getSourceFromMap(map, rows, columns, objectGenerator) {
   const objects = {
     /**
-     * @type {{row: number,col: number,tile: [number,number]}[]}
+     * @type {{row: number,col: number,object: {type: 0 | 5 | 1 | 2 | 7 | 6 | 3 | 4 | 8;age: 0 | 1 | 2;}}[]}
      */
     layer1: [],
     /**
-     * @type {{row: number,col: number,tile: [number,number]}[]}
+     * @type {({row:number,col:number,object:ObjectTree})[]}
      */
     layer2: [],
   };
+  /**
+   * @type {ObjectTree}
+   */
+  let newObj = null;
   return {
     ground: map.map((row, i) =>
       row.map((target, j) => {
         if (target.object) {
-          if (objectsRules[target.object.tile]) {
-            objects.layer1.push({
-              row: i,
-              col: j,
-              tile: getSourceFromTileNumber(target.object.tile, rows, columns),
-            });
-          } else {
+          newObj = objectGenerator({
+            row: i,
+            col: j,
+            object: target.object
+          });
             objects.layer2.push({
               row: i,
               col: j,
-              tile: getSourceFromTileNumber(target.object.tile, rows, columns),
+              object: newObj,
             });
-          }
         }
-        // return {
-        //   ground: [target.tile % columns, Math.floor(target.tile / rows)],
-        //   ...(target.object ? { object: {tile: [target.object.tile % columns, Math.floor(target.object.tile / rows)]} } : {}),
-        // };
-        return getSourceFromTileNumber(target.tile, rows, columns);
+        return {
+          tile: getSourceFromTileNumber(target.tile, rows, columns),
+          objects: newObj ? [newObj] : [],
+        };
       })
     ),
     objects,

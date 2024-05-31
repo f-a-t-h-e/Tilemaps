@@ -15,6 +15,11 @@ export class Game {
     this.ctx = ctx;
     this.w = GAME_WIDTH;
     this.h = GAME_HEIGHT;
+    this.minCols = 15;
+    this.minRows = 15;
+    this.zoom = 2;
+    this.baseTileSize = Math.max(this.w / this.minCols, this.h / this.minRows) * this.zoom;
+    // this.imageToCanvas = 2;
     this.keys = {
       ArrowUp: false,
       ArrowDown: false,
@@ -31,6 +36,7 @@ export class Game {
     this.editor = new Editor(this);
     this.debugging = false;
     this.draw = this.debugging ? this.drawDebug : this.drawNormal;
+    this.render = this.debugging ? this.renderDebug : this.renderNormal;
     this.editMode = false;
     this.renderEdit = this.editMode ? this.renderEditOn : this.renderEditOff;
 
@@ -38,8 +44,18 @@ export class Game {
     this.player = new Player(this, {
       x: -this.camera.x + this.camera.width * 0.5,
       y: -this.camera.y + this.camera.height * 0.5,
-      size: this.map.tileSize * 0.5,
+      size: 0.5,
     });
+
+    // this.player.applyCollision(0,0)
+
+    window.addEventListener("keypress", (e)=>{
+      if (e.key == "Enter") {
+        this.map.objects.print();
+        // console.log(this.map.objects.head);
+        // console.log(this.camera);
+      }
+    })
   }
   update(deltaTime) {
     let moveX = 0;
@@ -66,34 +82,12 @@ export class Game {
     }
     this.player.update(deltaTime);
   }
-  render() {
-    // this.ctx.drawImage(
-    //   this.map.image,
-    //   this.camera.x,
-    //   this.camera.y,
-    //   this.camera.width,
-    //   this.camera.height,
-    //   0,
-    //   0,
-    //   GAME_WIDTH,
-    //   GAME_HEIGHT
-    // );
-
-    // for (let row = 0; row < this.map.cols; row++) {
-    //   for (let col = 0; col < this.map.rows; col++) {
-    //     this.draw(
-    //       this.map.image,
-    //       col,
-    //       row,
-    //       col,
-    //       row,
-    //       this.map.imageTile
-    //     );
-    //   }
-    // }
-    // this.draw( this.map.image, 0, 0, 0, 0, this.map.imageTile);
-    this.map.drawGround();
-    this.player.render();
+  renderNormal() {
+    this.map.render();
+    this.renderEdit();
+  }
+  renderDebug() {
+    this.map.debug();
     this.renderEdit();
   }
   /**
@@ -104,8 +98,10 @@ export class Game {
   resize(w, h) {
     this.w = w;
     this.h = h;
-    this.map.resize();
-    this.camera.resize(...this.player.resize());
+    let newTileSizeRatio = (Math.max(this.w / this.minCols, this.h / this.minRows) / this.baseTileSize) * this.zoom
+    this.baseTileSize *= newTileSizeRatio;
+    this.map.resize(newTileSizeRatio);
+    // this.camera.resize(...this.player.resize(newTileSizeRatio));
   }
   /**
    *
@@ -118,21 +114,22 @@ export class Game {
    */
   drawDebug(image, sx, sy, dx, dy, imageTile) {
     this.drawNormal(image, sx, sy, dx, dy, imageTile);
+    this.ctx.save();
+    this.ctx.strokeStyle = "#eaeaea"
     this.ctx.strokeRect(
-      dx * this.map.tileSize + this.camera.x,
-      dy * this.map.tileSize + this.camera.y,
+      dx + this.camera.x,
+      dy + this.camera.y,
       this.map.tileSize,
       this.map.tileSize
     );
-    this.ctx.save();
     this.ctx.fillStyle = "red";
-    this.ctx.font = "20px Arial";
+    this.ctx.font = `${this.baseTileSize * .2}px Arial`;
     this.ctx.textAlign = "center";
     this.ctx.textBaseline = "middle";
     this.ctx.fillText(
-      dy * this.map.cols + dx,
-      dx * this.map.tileSize + 0.5 * this.map.tileSize + this.camera.x,
-      dy * this.map.tileSize + 0.5 * this.map.tileSize + this.camera.y
+      Math.floor(dy / this.map.tileSize) + Math.floor(dx/this.map.tileSize),
+      dx + 0.5 * this.map.tileSize + this.camera.x,
+      dy + 0.5 * this.map.tileSize + this.camera.y
       // this.map.tileSize,
     );
     this.ctx.restore();
@@ -149,12 +146,12 @@ export class Game {
   drawNormal(image, sx, sy, dx, dy, imageTile) {
     this.ctx.drawImage(
       image,
-      sx * imageTile,
-      sy * imageTile,
+      sx,
+      sy,
       imageTile,
       imageTile,
-      dx * this.map.tileSize + this.camera.x,
-      dy * this.map.tileSize + this.camera.y,
+      dx + this.camera.x,
+      dy + this.camera.y,
       this.map.tileSize,
       this.map.tileSize
     );
@@ -166,6 +163,7 @@ export class Game {
   toggleDebugging() {
     this.debugging = !this.debugging;
     this.draw = this.debugging ? this.drawDebug : this.drawNormal;
+    this.render = this.debugging ? this.renderDebug : this.renderNormal;
   }
   toggleEditMode() {
     const editingControlsParent = document.getElementById("edit-controls");

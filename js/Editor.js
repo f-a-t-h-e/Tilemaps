@@ -101,7 +101,7 @@ export class Editor {
 
   apply(row, column, action = "click") {
     if (this.target) {
-      this.game.map.ground[row][column] = this.target.tile;
+      this.game.map.ground[row][column].tile = this.target.tile;
     }
   }
 }
